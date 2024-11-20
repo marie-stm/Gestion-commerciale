@@ -1,0 +1,533 @@
+' Variable globale pour stocker la sélection de la base de données
+Dim dbSelection As String
+
+' Subroutine pour le bouton Saisie dans la feuille Accueil
+Sub Saisie_Click()
+    ' Vérifie si une base de données est sélectionnée
+    If dbSelection = "" Then
+        MsgBox "Veuillez sélectionner une base de données.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Affiche le formulaire correspondant à la base de données sélectionnée
+    Select Case dbSelection
+        Case "Clients"
+            UserFormClients.Show
+        Case "Factures"
+            UserFormFactures.Show
+        Case "Vendeurs"
+            UserFormVendeur.Show
+        Case "Produits"
+            UserFormProduit.Show
+    End Select
+End Sub
+
+
+' Subroutine pour le bouton Consultation dans la feuille Accueil
+Sub Consultation_Click()
+    ' Vérifie si une base de données est sélectionnée
+    If dbSelection = "" Then
+        MsgBox "Veuillez sélectionner une base de données.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Exécute la consultation pour la base de données sélectionnée
+    EffectuerConsultation
+End Sub
+
+' Subroutine pour le bouton Reporting dans la feuille Accueil
+Sub Reporting_Click()
+    ' Vérifie si une base de données est sélectionnée
+    If dbSelection = "" Then
+        MsgBox "Veuillez sélectionner une base de données.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Exécute le reporting pour la base de données sélectionnée
+    EffectuerReporting
+End Sub
+
+' Subroutine pour les boutons de sélection de base de données
+Sub OptionClients_Click()
+    dbSelection = "Clients"
+End Sub
+
+Sub OptionFactures_Click()
+    dbSelection = "Factures"
+End Sub
+
+Sub OptionVendeurs_Click()
+    dbSelection = "Vendeurs"
+End Sub
+
+Sub OptionProduits_Click()
+    dbSelection = "Produits"
+End Sub
+
+' Subroutine pour afficher les données des différentes bases de données
+Sub EffectuerConsultation()
+    ' Redirection vers la feuille correspondante
+    Select Case dbSelection
+        Case "Clients"
+            Sheets("Clients").Activate
+        Case "Factures"
+            Sheets("Factures").Activate
+        Case "Vendeurs"
+            Sheets("Vendeur").Activate
+        Case "Produits"
+            Sheets("Produit").Activate
+        Case Else
+            MsgBox "Veuillez sélectionner une option valide", vbExclamation
+    End Select
+End Sub
+' Subroutine pour effectuer le reporting des différentes bases de données
+Sub EffectuerReporting()
+    ' Redirection vers la feuille correspondante
+    Select Case dbSelection
+        Case "Clients"
+            GenerateClientsReport
+        Case "Factures"
+            GenerateInvoiceReport
+        Case "Vendeurs"
+            GenerateSellerReport
+        Case "Produits"
+            GenerateProductReport
+        Case Else
+            MsgBox "Veuillez sélectionner une option valide", vbExclamation
+    End Select
+End Sub
+
+Sub GenerateClientsReport()
+    Dim wsFactures As Worksheet
+    Dim wsReport As Worksheet
+    Dim DerniereLigne As Long
+    Dim CA As Double
+    Dim TotalCA As Double
+    Dim Cell As Range
+    Dim clientName As String
+
+    ' Définir le nom du client (à remplacer par le nom réel du client)
+    clientName = "NomDuClient" ' À remplacer par le nom du client sélectionné
+
+    ' Définir les feuilles
+    Set wsFactures = ThisWorkbook.Sheets("Factures")
+    On Error Resume Next
+    Set wsReport = ThisWorkbook.Sheets("Rapport Clients")
+    On Error GoTo 0
+
+    ' Si la feuille de rapport n'existe pas, la créer
+    If wsReport Is Nothing Then
+        Set wsReport = ThisWorkbook.Sheets.Add
+        wsReport.Name = "Rapport Clients"
+    Else
+        wsReport.Cells.Clear
+    End If
+
+    ' Calcul du Chiffre d'Affaires pour le client spécifique
+    CA = 0
+    TotalCA = Application.WorksheetFunction.Sum(wsFactures.Range("G:G"))
+
+    For Each Cell In wsFactures.Range("D2:D" & wsFactures.Cells(wsFactures.Rows.Count, "D").End(xlUp).Row)
+        If Cell.Value = clientName Then
+            CA = CA + Cell.Offset(0, 3).Value ' Colonne G : Montant
+        End If
+    Next Cell
+
+    ' Calcul du Poids dans le Portefeuille
+    If TotalCA <> 0 Then
+        PourcentageCA = (CA / TotalCA) * 100
+    Else
+        PourcentageCA = 0
+    End If
+
+    ' Générer le rapport
+    With wsReport
+        .Cells(1, 1).Value = "Client"
+        .Cells(1, 2).Value = clientName
+        .Cells(2, 1).Value = "Chiffre d'Affaires (EUR)"
+        .Cells(2, 2).Value = CA
+        .Cells(3, 1).Value = "Poids dans le Portefeuille (%)"
+        .Cells(3, 2).Value = PourcentageCA
+    End With
+
+    ' Activer la feuille du rapport
+    wsReport.Activate
+End Sub
+
+Sub GenerateInvoiceReport()
+    Dim wsFactures As Worksheet
+    Dim wsReport As Worksheet
+    Dim DerniereLigne As Long
+    Dim CA As Double
+    Dim TotalCA As Double
+    Dim Cell As Range
+    Dim invoiceNumber As String
+
+    ' Définir le numéro de la facture (à remplacer par le numéro réel de la facture)
+    invoiceNumber = "NumeroDeFacture" ' À remplacer par le numéro de la facture sélectionnée
+
+    ' Définir les feuilles
+    Set wsFactures = ThisWorkbook.Sheets("Factures")
+    On Error Resume Next
+    Set wsReport = ThisWorkbook.Sheets("Rapport Factures")
+    On Error GoTo 0
+
+    ' Si la feuille de rapport n'existe pas, la créer
+    If wsReport Is Nothing Then
+        Set wsReport = ThisWorkbook.Sheets.Add
+        wsReport.Name = "Rapport Factures"
+    Else
+        wsReport.Cells.Clear
+    End If
+
+    ' Calcul du Chiffre d'Affaires pour la facture spécifique
+    CA = 0
+    TotalCA = Application.WorksheetFunction.Sum(wsFactures.Range("G:G"))
+
+    For Each Cell In wsFactures.Range("A2:A" & wsFactures.Cells(wsFactures.Rows.Count, "A").End(xlUp).Row)
+        If Cell.Value = invoiceNumber Then
+            CA = CA + Cell.Offset(0, 6).Value ' Colonne G : Montant
+        End If
+    Next Cell
+
+    ' Calcul du Poids dans le Portefeuille
+    If TotalCA <> 0 Then
+        PourcentageCA = (CA / TotalCA) * 100
+    Else
+        PourcentageCA = 0
+    End If
+
+    ' Générer le rapport
+    With wsReport
+        .Cells(1, 1).Value = "Facture"
+        .Cells(1, 2).Value = invoiceNumber
+        .Cells(2, 1).Value = "Chiffre d'Affaires (EUR)"
+        .Cells(2, 2).Value = CA
+        .Cells(3, 1).Value = "Poids dans le Portefeuille (%)"
+        .Cells(3, 2).Value = PourcentageCA
+    End With
+
+    ' Activer la feuille du rapport
+    wsReport.Activate
+End Sub
+
+Sub GenerateSellerReport()
+    Dim wsFactures As Worksheet
+    Dim wsReport As Worksheet
+    Dim DerniereLigne As Long
+    Dim CA As Double
+    Dim TotalCA As Double
+    Dim Cell As Range
+    Dim sellerName As String
+
+    ' Définir le nom du vendeur (à remplacer par le nom réel du vendeur)
+    sellerName = "NomDuVendeur" ' À remplacer par le nom du vendeur sélectionné
+
+    ' Définir les feuilles
+    Set wsFactures = ThisWorkbook.Sheets("Factures")
+    On Error Resume Next
+    Set wsReport = ThisWorkbook.Sheets("Rapport Vendeurs")
+    On Error GoTo 0
+
+    ' Si la feuille de rapport n'existe pas, la créer
+    If wsReport Is Nothing Then
+        Set wsReport = ThisWorkbook.Sheets.Add
+        wsReport.Name = "Rapport Vendeurs"
+    Else
+        wsReport.Cells.Clear
+    End If
+
+    ' Calcul du Chiffre d'Affaires pour le vendeur spécifique
+    CA = 0
+    TotalCA = Application.WorksheetFunction.Sum(wsFactures.Range("G:G"))
+
+    For Each Cell In wsFactures.Range("E2:E" & wsFactures.Cells(wsFactures.Rows.Count, "E").End(xlUp).Row)
+        If Cell.Value = sellerName Then
+            CA = CA + Cell.Offset(0, 2).Value ' Colonne G : Montant
+        End If
+    Next Cell
+
+    ' Calcul du Poids dans le Portefeuille
+    If TotalCA <> 0 Then
+        PourcentageCA = (CA / TotalCA) * 100
+    Else
+        PourcentageCA = 0
+    End If
+
+    ' Générer le rapport
+    With wsReport
+        .Cells(1, 1).Value = "Vendeur"
+        .Cells(1, 2).Value = sellerName
+        .Cells(2, 1).Value = "Chiffre d'Affaires (EUR)"
+        .Cells(2, 2).Value = CA
+        .Cells(3, 1).Value = "Poids dans le Portefeuille (%)"
+        .Cells(3, 2).Value = PourcentageCA
+    End With
+
+    ' Activer la feuille du rapport
+    wsReport.Activate
+End Sub
+
+Sub GenerateProductReport()
+    Dim wsFactures As Worksheet
+    Dim wsReport As Worksheet
+    Dim DerniereLigne As Long
+    Dim CA As Double
+    Dim TotalCA As Double
+    Dim Cell As Range
+    Dim productName As String
+
+    ' Définir le nom du produit (à remplacer par le nom réel du produit)
+    productName = "NomDuProduit" ' À remplacer par le nom du produit sélectionné
+
+    ' Définir les feuilles
+    Set wsFactures = ThisWorkbook.Sheets("Factures")
+    On Error Resume Next
+    Set wsReport = ThisWorkbook.Sheets("Rapport Produits")
+    On Error GoTo 0
+
+    ' Si la feuille de rapport n'existe pas, la créer
+    If wsReport Is Nothing Then
+        Set wsReport = ThisWorkbook.Sheets.Add
+        wsReport.Name = "Rapport Produits"
+    Else
+        wsReport.Cells.Clear
+    End If
+
+    ' Calcul du Chiffre d'Affaires pour le produit spécifique
+    CA = 0
+    TotalCA = Application.WorksheetFunction.Sum(wsFactures.Range("G:G"))
+
+    For Each Cell In wsFactures.Range("H2:H" & wsFactures.Cells(wsFactures.Rows.Count, "H").End(xlUp).Row)
+        If Cell.Value = productName Then
+            CA = CA + Cell.Offset(0, -1).Value ' Colonne G : Montant
+        End If
+    Next Cell
+
+    ' Calcul du Poids dans le Portefeuille
+    If TotalCA <> 0 Then
+        PourcentageCA = (CA / TotalCA) * 100
+    Else
+        PourcentageCA = 0
+    End If
+
+    ' Générer le rapport
+    With wsReport
+        .Cells(1, 1).Value = "Produit"
+        .Cells(1, 2).Value = productName
+        .Cells(2, 1).Value = "Chiffre d'Affaires (EUR)"
+        .Cells(2, 2).Value = CA
+        .Cells(3, 1).Value = "Poids dans le Portefeuille (%)"
+        .Cells(3, 2).Value = PourcentageCA
+    End With
+
+    ' Activer la feuille du rapport
+    wsReport.Activate
+End Sub
+
+
+Private Sub btnValiderClients_Click()
+    ValiderClient
+End Sub
+
+Private Sub btnAnnulerClients_Click()
+    AnnulerClient
+End Sub
+
+
+Sub ValiderClients()
+    ' Objectif: Enregistrer les données saisies dans la feuille Clients
+    Dim DerniereLigne As Long
+    Dim CodeClient As String
+    Dim NomClient As String
+    
+    ' Vérification que les champs obligatoires sont remplis
+    NomClient = UserFormClients.txtNomClient.Value
+    If NomClient = "" Then
+        MsgBox "Le nom du client est obligatoire", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Génération du CodeClient
+    CodeClient = Left(NomClient, 3) & Format(Date, "YYYYMMDDHHMMSS")
+    
+    ' Ajout des données dans la feuille Clients
+    With Sheets("Clients")
+        DerniereLigne = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
+        .Cells(DerniereLigne, 1).Value = CodeClient ' CodeClient généré automatiquement
+        .Cells(DerniereLigne, 2).Value = NomClient
+        .Cells(DerniereLigne, 3).Value = UserFormClients.txtSecteur.Value
+        .Cells(DerniereLigne, 4).Value = UserFormClients.txtType.Value
+        .Cells(DerniereLigne, 5).Value = UserFormClients.txtContact.Value
+        .Cells(DerniereLigne, 6).Value = UserFormClients.txtAdresse.Value
+        .Cells(DerniereLigne, 7).Value = UserFormClients.txtPhone.Value
+        .Cells(DerniereLigne, 8).Value = UserFormClients.txtEmail.Value
+        .Cells(DerniereLigne, 9).Value = UserFormClients.txtCommentaire.Value
+    End With
+
+    ' Message de confirmation
+    MsgBox "Client ajouté avec succès", vbInformation
+    
+    ' Réinitialisation du formulaire
+    UserFormClients.Hide
+End Sub
+
+Sub AnnulerClients()
+    ' Objectif: Fermer le formulaire Clients sans enregistrer les données
+    UserFormClients.Hide
+End Sub
+
+' Code pour UserFormFactures
+Private Sub btnValiderFactures_Click()
+    ValiderFacture
+End Sub
+
+Private Sub btnAnnulerFactures_Click()
+    AnnulerFacture
+End Sub
+
+Sub ValiderFacture()
+    ' Objectif: Enregistrer les données saisies dans la feuille Factures
+    Dim DerniereLigne As Long
+    
+    ' Vérification que les champs obligatoires sont remplis
+    If UserFormFactures.txtNoFacture.Value = "" Then
+        MsgBox "Le numéro de la facture est obligatoire", vbExclamation
+        Exit Sub
+    End If
+
+    ' Ajout des données dans la feuille Factures
+    With Sheets("Factures")
+        DerniereLigne = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
+        .Cells(DerniereLigne, 1).Value = UserFormFactures.txtNoFacture.Value
+        .Cells(DerniereLigne, 2).Value = UserFormFactures.txtAlerte.Value
+        .Cells(DerniereLigne, 3).Value = UserFormFactures.txtDate.Value
+        .Cells(DerniereLigne, 4).Value = UserFormFactures.txtClient.Value
+        .Cells(DerniereLigne, 5).Value = UserFormFactures.txtVendeur.Value
+        .Cells(DerniereLigne, 6).Value = UserFormFactures.txtMontant.Value
+        .Cells(DerniereLigne, 7).Value = UserFormFactures.txtOperation.Value
+        .Cells(DerniereLigne, 8).Value = UserFormFactures.txtProduit.Value
+        .Cells(DerniereLigne, 9).Value = UserFormFactures.txtCredit.Value
+        .Cells(DerniereLigne, 10).Value = UserFormFactures.txtDateValeur.Value
+        .Cells(DerniereLigne, 11).Value = UserFormFactures.txtDateEncaissement.Value
+        .Cells(DerniereLigne, 12).Value = UserFormFactures.txtCommentaire.Value
+    End With
+
+    ' Message de confirmation
+    MsgBox "Facture ajoutée avec succès", vbInformation
+    
+    ' Réinitialisation du formulaire
+    UserFormFactures.Hide
+End Sub
+
+Sub AnnulerFacture()
+    ' Objectif: Fermer le formulaire Factures sans enregistrer les données
+    UserFormFactures.Hide
+End Sub
+
+Private Sub btnValiderVendeur_Click()
+    ValiderVendeur
+End Sub
+
+Private Sub btnAnnulerVendeur_Click()
+    AnnulerVendeur
+End Sub
+
+Sub ValiderVendeur()
+    ' Objectif: Enregistrer les données saisies dans la feuille Vendeurs
+    Dim DerniereLigne As Long
+    Dim CodeVendeur As String
+    Dim NomVendeur As String
+    Dim PrenomVendeur As String
+    
+    ' Vérification que les champs obligatoires sont remplis
+    NomVendeur = UserFormVendeurs.txtNom.Value
+    PrenomVendeur = UserFormVendeurs.txtPrenom.Value
+    If NomVendeur = "" Then
+        MsgBox "Le nom du vendeur est obligatoire", vbExclamation
+        Exit Sub
+    End If
+    If PrenomVendeur = "" Then
+        MsgBox "Le prénom du vendeur est obligatoire", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Génération du CodeVendeur
+    CodeVendeur = Left(NomVendeur, 1) & PrenomVendeur
+
+    ' Ajout des données dans la feuille Vendeurs
+    With Sheets("Vendeurs")
+        DerniereLigne = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
+        .Cells(DerniereLigne, 1).Value = CodeVendeur ' CodeVendeur généré automatiquement
+        .Cells(DerniereLigne, 2).Value = NomVendeur
+        .Cells(DerniereLigne, 3).Value = PrenomVendeur
+        .Cells(DerniereLigne, 4).Value = UserFormVendeurs.txtDateRecrutement.Value
+        .Cells(DerniereLigne, 5).Value = UserFormVendeurs.txtSalaire.Value
+        .Cells(DerniereLigne, 6).Value = UserFormVendeurs.txtCommentaire.Value
+    End With
+
+    ' Message de confirmation
+    MsgBox "Vendeur ajouté avec succès", vbInformation
+    
+    ' Réinitialisation du formulaire
+    UserFormVendeurs.Hide
+End Sub
+
+Sub AnnulerVendeur()
+    ' Objectif: Fermer le formulaire Vendeurs sans enregistrer les données
+    UserFormVendeurs.Hide
+End Sub
+
+Private Sub btnValiderProduit_Click()
+    ValiderProduit
+End Sub
+
+Private Sub btnAnnulerProduit_Click()
+    AnnulerProduit
+End Sub
+
+' Code pour UserFormProduits
+Private Sub btnValider_Click()
+    ValiderProduit
+End Sub
+
+Private Sub btnAnnuler_Click()
+    AnnulerProduit
+End Sub
+
+Sub ValiderProduit()
+    ' Objectif: Enregistrer les données saisies dans la feuille Produits
+    Dim DerniereLigne As Long
+    Dim CodeProduit As String
+    Dim ModeleProduit As String
+    
+    ' Vérification que les champs obligatoires sont remplis
+    ModeleProduit = UserFormProduit.txtModele.Value
+    If ModeleProduit = "" Then
+        MsgBox "Le modèle du produit est obligatoire", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Génération du CodeProduit
+    CodeProduit = Left(ModeleProduit, 3) & Format(Date, "YYYYMMDDHHMMSS")
+
+    ' Ajout des données dans la feuille Produits
+    With Sheets("Produits")
+        DerniereLigne = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
+        .Cells(DerniereLigne, 1).Value = CodeProduit ' CodeProduit généré automatiquement
+        .Cells(DerniereLigne, 2).Value = ModeleProduit
+        .Cells(DerniereLigne, 3).Value = UserFormProduits.txtCommentaire.Value
+    End With
+
+    ' Message de confirmation
+    MsgBox "Produit ajouté avec succès", vbInformation
+    
+    ' Réinitialisation du formulaire
+    UserFormProduits.Hide
+End Sub
+
+Sub AnnulerProduit()
+    ' Objectif: Fermer le formulaire Produits sans enregistrer les données
+    UserFormProduits.Hide
+End Sub
+
